@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新潟屋内サバイバルゲーム - 支払い完了</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+            body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f0f4f8; /* Light background */
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    /* Ensure content is below header and above footer */
+    main {
+        flex-grow: 1;
+        padding-top: 64px; /* Height of header */
+        padding-bottom: 64px; /* Height of footer */
+        /* ★★★ ここから中央寄せのための追加/修正 ★★★ */
+        display: flex; /* Flexboxを有効にする */
+        justify-content: center; /* 主軸 (横方向) で中央寄せ */
+        align-items: flex-start; /* 交差軸 (縦方向) で上部に揃える（コンテンツが短い場合も上部から始まるように） */
+        /* または align-items: center; を使用して、常に縦方向も中央にする場合はこちら */
+        /* min-height: calc(100vh - 128px); /* ヘッダーとフッターの高さを引いた分の最小高さを確保 */
+        /* paddingを増やすことで、画面の端にコンテンツが近すぎるのを防ぎます */
+        padding-left: 1rem; 
+        padding-right: 1rem;
+    }
+    /* completion.html のみの特別なbodyスタイルは、引き続きそのファイル内で維持します */
+    /* .screen.active はもう使わないので削除しても良いですが、残していても問題ありません */
+
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }
+    /* エラーメッセージのスタイル (既存) */
+    .error-message {
+        color: #ef4444; /* Tailwind red-500 */
+        font-size: 0.875rem; /* text-sm */
+        margin-top: 0.25rem; /* mt-1 */
+        display: none; /* 初期状態では非表示 */
+    }
+    .error-message.active {
+        display: block;
+    }
+    .input-error {
+        border-color: #ef4444; /* Tailwind red-500 */
+        box-shadow: 0 0 0 1px #ef4444;
+    }
+    /* payment.html の支払いフォーム切り替え用 (既存) */
+    .payment-form-section {
+        display: none;
+    }
+    .payment-form-section.active {
+        display: block;
+    }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 中央寄せ */
+            align-items: center;     /* 中央寄せ */
+            text-align: center;      /* テキスト中央寄せ */
+        }
+        /* ヘッダーとフッターは表示しない、または非常にシンプルにする場合 */
+        header, footer {
+            display: none; /* この完了画面ではヘッダーとフッターを非表示にする例 */
+        }
+        main {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 1rem; /* パディングを追加 */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <main>
+        <section id="completion" class="bg-white p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-md border border-gray-200">
+            <h2 class="text-4xl font-extrabold text-center text-gray-900 mb-6">
+                <span class="text-green-600">✔</span> 支払い完了！
+            </h2>
+            <p class="text-lg text-gray-700 mb-8">ご予約とお支払いが完了いたしました。<br>ありがとうございます！</p>
+            <p class="text-md text-gray-600 mb-8">
+                <span id="countdown">5</span>秒後に自動的にホーム画面に戻ります。
+            </p>
+
+            <div class="text-center">
+                <button onclick="window.location.href='home.html';"
+                        class="inline-flex items-center px-8 py-3 border border-transparent text-lg font-semibold rounded-lg shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:-translate-y-0.5">
+                    ホームに戻る
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+
+            // カウントダウン表示の更新と自動遷移
+            const intervalId = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+
+                if (countdown <= 0) {
+                    clearInterval(intervalId); // カウントダウンを停止
+                    window.location.href = 'home.html'; // home.htmlへ遷移
+                }
+            }, 1000); // 1秒ごとに実行
+        });
+    </script>
+</body>
+</html>

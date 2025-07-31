@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新潟屋内サバイバルゲーム - 予約</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex-grow: 1;
+            padding-top: 64px;
+            padding-bottom: 64px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* コンテンツが多いので上部から配置 */
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        /* ★★★ ここからフォーム要素の揃えのための追加CSS ★★★ */
+        .form-row {
+            display: flex;
+            align-items: center; /* 縦方向の中央に揃える */
+            margin-bottom: 1rem; /* 各行の間の余白 */
+            /* 必要であればメディアクエリでスマホ時は縦積みに変更 */
+        }
+        .form-row label {
+            min-width: 160px; /* ラベルの最小幅を固定 (調整可能、日本語ラベルの長さに合わせる) */
+            flex-shrink: 0; /* ラベルが縮まないようにする */
+            margin-right: 1rem; /* ラベルと入力フィールドの間の余白 */
+            text-align: right; /* ラベルのテキストを右寄せにする */
+        }
+        .form-row .input-container {
+            flex-grow: 1; /* 入力フィールドが残りのスペースを占めるようにする */
+        }
+        .form-row input, .form-row select, .form-row textarea {
+            width: 100%; /* input, select, textareaはコンテナ内で100%幅 */
+        }
+        /* レンタル品の部分はグリッドなので、form-rowは使わない */
+        /* スマホ用: 画面幅が狭い場合はラベルと入力フィールドを縦積みにする */
+        @media (max-width: 768px) { /* mdブレイクポイントより小さい場合 */
+            .form-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .form-row label {
+                min-width: auto;
+                width: 100%;
+                text-align: left;
+                margin-right: 0;
+                margin-bottom: 0.5rem; /* ラベルと入力フィールドの間の余白を調整 */
+            }
+        }
+        /* ★★★ ここまでフォーム要素の揃えのための追加CSS ★★★ */
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .error-message.active {
+            display: block;
+        }
+        .input-error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <header class="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg z-50 p-4 flex items-center justify-between">
+        <div class="text-2xl font-bold tracking-wide">
+            <a href="home.html" class="hover:text-blue-200 transition-colors duration-300">
+                サバゲー新潟
+            </a>
+        </div>
+        <nav>
+            <ul class="flex space-x-6">
+                <li><a href="home.html" class="hover:text-blue-200 transition-colors duration-300 font-medium">ホーム</a></li>
+                <li><a href="contact.html" class="hover:text-blue-200 transition-colors duration-300 font-medium">お問い合わせ</a></li>
+                <li><a href="login.html" class="hover:text-blue-200 transition-colors duration-300 font-medium">ログアウト</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+
+        <section id="reservation" class="py-12 flex items-center justify-center">
+            <div class="bg-white p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-3xl border border-gray-200 transform hover:scale-100 transition-transform duration-300">
+                <h2 class="text-4xl font-extrabold text-center text-gray-900 mb-8">予約フォーム</h2>
+                <form class="space-y-6" onsubmit="return false;"> <div> <label for="reservation-date" class="block text-xl font-semibold text-gray-800 mb-3">予約日時</label>
+                        <input type="date" id="reservation-date" name="reservation-date" required
+                               class="block w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg transition-all duration-200"
+                               onchange="clearErrorMessage(this, 'reservation-date-error')">
+                        <p id="reservation-date-error" class="error-message"></p>
+                        <select id="reservation-time" name="reservation-time" required
+                                class="mt-4 block w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg transition-all duration-200"
+                                onchange="clearErrorMessage(this, 'reservation-time-error')">
+                            <option value="">時間を選択してください</option>
+                            <option value="10:00">10:00 - 12:00</option>
+                            <option value="13:00">13:00 - 15:00</option>
+                            <option value="16:00">16:00 - 18:00</option>
+                            <option value="19:00">19:00 - 21:00</option>
+                        </select>
+                        <p id="reservation-time-error" class="error-message"></p>
+                    </div>
+
+                    <div> <label for="num-adults" class="block text-xl font-semibold text-gray-800 mb-3">予約人数（大人）</label>
+                        <input type="number" id="num-adults" name="num-adults" min="0" value="1" required
+                               class="block w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg transition-all duration-200"
+                               oninput="handleParticipantInput()">
+                        <label for="num-children" class="block text-xl font-semibold text-gray-800 mb-3 mt-4">予約人数（子供 15歳以下）</label>
+                        <input type="number" id="num-children" name="num-children" min="0" value="0" required
+                               class="block w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg transition-all duration-200"
+                               oninput="handleParticipantInput()">
+                        <p class="text-sm text-gray-600 mt-2">※大人と子供の合計人数で1名〜30名までご予約可能です。</p>
+                        <p id="total-participants-error" class="error-message"></p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-4">レンタル品（必要な数をご入力ください）</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-row">
+                                <label for="rental-sensor" class="block text-lg font-medium text-gray-700">センサー</label>
+                                <div class="input-container">
+                                    <input type="number" id="rental-sensor" name="rental-sensor" min="0" value="0" readonly
+                                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base bg-gray-200 cursor-not-allowed">
+                                    <p id="sensor-error" class="error-message"></p>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label for="rental-airgun" class="block text-lg font-medium text-gray-700">エアガン</label>
+                                <div class="input-container">
+                                    <input type="number" id="rental-airgun" name="rental-airgun" min="0" value="0"
+                                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                                           oninput="handleOtherRentalInput()"> <p id="airgun-error" class="error-message"></p>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label for="rental-goggles" class="block text-lg font-medium text-gray-700">ゴーグル</label>
+                                <div class="input-container">
+                                    <input type="number" id="rental-goggles" name="rental-goggles" min="0" value="0"
+                                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                                           oninput="handleOtherRentalInput()"> <p id="goggles-error" class="error-message"></p>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label for="rental-gloves" class="block text-lg font-medium text-gray-700">手袋</label>
+                                <div class="input-container">
+                                    <input type="number" id="rental-gloves" name="rental-gloves" min="0" value="0"
+                                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                                           oninput="handleOtherRentalInput()"> <p id="gloves-error" class="error-message"></p>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label for="rental-fullset" class="block text-lg font-medium text-gray-700">全部セット</label>
+                                <div class="input-container">
+                                    <input type="number" id="rental-fullset" name="rental-fullset" min="0" value="0"
+                                           class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base"
+                                           oninput="handleFullSetInput()">
+                                    <p id="fullset-error" class="error-message"></p>
+                                    <p class="text-sm text-gray-600 mt-1">※センサー、エアガン、ゴーグル、手袋が含まれます。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="combined-rental-max-error" class="error-message text-center mt-4"></p> </div>
+
+                    <div class="mt-8 p-6 bg-blue-50 rounded-lg shadow-md border border-blue-200 text-center">
+                        <p class="text-2xl font-bold text-gray-800">合計金額: <span id="total-price" class="text-blue-700">¥0</span> (税込)</p>
+                    </div>
+
+                    <div class="text-center mt-10">
+                        <button type="button" onclick="confirmBookingAndProceedToPayment()"
+                                class="inline-flex items-center px-10 py-4 border border-transparent text-xl font-semibold rounded-lg shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+                            予約を確定する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="fixed bottom-0 left-0 w-full bg-gray-800 text-gray-300 shadow-inner z-50 p-4 text-center text-sm">
+        <p>&copy; 2025 新潟屋内サバイバルゲーム. All rights reserved.</p>
+        <div class="mt-2 space-x-4">
+            <a href="#" class="hover:text-white transition-colors duration-300">プライバシーポリシー</a>
+            <a href="#" class="hover:text-white transition-colors duration-300">利用規約</a>
+        </div>
+    </footer>
+
+    <script>
+        // 価格定数
+        const PRICES = {
+            basePlayAdult: 3500,  // 大人の基本プレイ料金
+            basePlayChild: 2500,  // 子供の基本プレイ料金 (例: 15歳以下)
+            // jacket: 1200,         // 上着
+            sensor: 500,          // センサー
+            airgun: 1500,         // エアガン
+            goggles: 300,         // ゴーグル
+            gloves: 300,          // 手袋
+            fullSet: 2300         // 全部セット
+        };
+
+        // エラーメッセージを表示するヘルパー関数
+        function showErrorMessage(inputElement, errorMessageId, message) {
+            const errorElement = document.getElementById(errorMessageId);
+            errorElement.textContent = message;
+            errorElement.classList.add('active');
+            if (inputElement) {
+                inputElement.classList.add('input-error');
+            }
+        }
+
+        // エラーメッセージをクリアするヘルパー関数
+        function clearErrorMessage(inputElement, errorMessageId) {
+            const errorElement = document.getElementById(errorMessageId);
+            errorElement.classList.remove('active');
+            if (inputElement) {
+                inputElement.classList.remove('input-error');
+            }
+        }
+
+        // 全てのエラーメッセージと入力スタイルをクリアする関数 (特定のセクション用)
+        function clearAllBookingErrors() {
+            clearErrorMessage(document.getElementById('reservation-date'), 'reservation-date-error');
+            clearErrorMessage(document.getElementById('reservation-time'), 'reservation-time-error');
+            clearErrorMessage(document.getElementById('num-adults'), 'total-participants-error');
+            clearErrorMessage(document.getElementById('num-children'), 'total-participants-error');
+            clearErrorMessage(document.getElementById('rental-jacket'), 'jacket-error');
+            clearErrorMessage(document.getElementById('rental-sensor'), 'sensor-error'); 
+            clearErrorMessage(document.getElementById('rental-airgun'), 'airgun-error'); 
+            clearErrorMessage(document.getElementById('rental-goggles'), 'goggles-error'); 
+            clearErrorMessage(document.getElementById('rental-gloves'), 'gloves-error'); 
+            clearErrorMessage(document.getElementById('rental-fullset'), 'fullset-error'); 
+            clearErrorMessage(null, 'combined-rental-max-error'); // 新しいエラーもクリア
+        }
+
+
+        /**
+         * 予約の合計金額を計算し、表示を更新します。
+         * @returns {number} 計算された合計金額
+         */
+        function calculateTotalPrice() {
+            let total = 0;
+
+            const numAdultsInput = document.getElementById('num-adults');
+            const numChildrenInput = document.getElementById('num-children');
+
+            const numAdults = parseInt(numAdultsInput.value) || 0;
+            const numChildren = parseInt(numChildrenInput.value) || 0;
+            const totalParticipants = numAdults + numChildren;
+
+            // 人数エラーメッセージのクリア
+            clearErrorMessage(numAdultsInput, 'total-participants-error');
+            clearErrorMessage(numChildrenInput, 'total-participants-error');
+
+            if (totalParticipants === 0) {
+                showErrorMessage(numAdultsInput, 'total-participants-error', '予約人数を1名以上入力してください。');
+                document.getElementById('total-price').textContent = `¥0`;
+                return 0;
+            } else if (totalParticipants > 30) {
+                showErrorMessage(numAdultsInput, 'total-participants-error', '大人と子供の合計人数は30名までです。');
+                document.getElementById('total-price').textContent = `¥0`;
+                return 0;
+            }
+
+            total += numAdults * PRICES.basePlayAdult;
+            total += numChildren * PRICES.basePlayChild;
+
+            // レンタル品料金 (センサーもここで合算)
+            total += (parseInt(document.getElementById('rental-jacket').value) || 0) * PRICES.jacket;
+            total += (parseInt(document.getElementById('rental-sensor').value) || 0) * PRICES.sensor; 
+            total += (parseInt(document.getElementById('rental-airgun').value) || 0) * PRICES.airgun;
+            total += (parseInt(document.getElementById('rental-goggles').value) || 0) * PRICES.goggles;
+            total += (parseInt(document.getElementById('rental-gloves').value) || 0) * PRICES.gloves;
+            total += (parseInt(document.getElementById('rental-fullset').value) || 0) * PRICES.fullSet;
+
+            // 合計金額を表示 (3桁区切りでフォーマット)
+            document.getElementById('total-price').textContent = `¥${total.toLocaleString()}`;
+
+            // レンタル品の最大値と全部セットの合計値のバリデーションを実行
+            validateCombinedRentalMax();
+
+            return total; // 計算した合計金額を返す
+        }
+
+        /**
+         * 予約人数入力時（大人/子供）に呼び出されるハンドラー。
+         * 人数に関するエラーメッセージをクリアし、センサー数を調整し、合計金額を再計算します。
+         */
+        function handleParticipantInput() {
+            // 人数入力時に、人数関連のエラーをクリア
+            clearErrorMessage(document.getElementById('num-adults'), 'total-participants-error');
+            clearErrorMessage(document.getElementById('num-children'), 'total-participants-error');
+            
+            // センサー数の自動調整ロジックを呼び出し、その後に合計金額を計算
+            adjustSensorCount(); 
+            // 人数変更に伴い、レンタル品の個別バリデーションも再度実行
+            // 全てのレンタル品に対してバリデーションを再トリガー
+            const rentalItemIds = ['rental-jacket', 'rental-airgun', 'rental-goggles', 'rental-gloves', 'rental-fullset'];
+            rentalItemIds.forEach(id => {
+                const inputElement = document.getElementById(id);
+                // inputイベントを発生させてバリデーションを再トリガー
+                inputElement.dispatchEvent(new Event('input')); 
+            });
+        }
+
+        /**
+         * 個別レンタル品の入力ハンドラー (センサー、全部セット以外)
+         */
+        function handleOtherRentalInput() {
+            const inputElement = event.target; // イベントを発生させた要素
+            const inputId = inputElement.id;
+            const errorId = inputId.replace('rental-', '') + '-error';
+
+            const inputValue = parseInt(inputElement.value) || 0;
+            const totalParticipants = (parseInt(document.getElementById('num-adults').value) || 0) + (parseInt(document.getElementById('num-children').value) || 0);
+
+            clearErrorMessage(inputElement, errorId); // まずエラーをクリア
+
+            // 人数よりも大きい値が入力された場合に警告
+            if (totalParticipants > 0 && inputValue > totalParticipants) {
+                showErrorMessage(inputElement, errorId, `レンタル数は人数(${totalParticipants}名)を超えられません。`);
+            } else if (inputValue < 0) {
+                inputElement.value = 0;
+            }
+            calculateTotalPrice(); // 合計金額と、それに伴う全体のレンタル品数バリデーションを実行
+        }
+
+
+        /**
+         * 全部セットの数入力時
+         */
+        function handleFullSetInput() {
+            const inputElement = document.getElementById('rental-fullset');
+            const errorId = 'fullset-error';
+            const rentalFullset = parseInt(inputElement.value) || 0;
+            const totalParticipants = (parseInt(document.getElementById('num-adults').value) || 0) + (parseInt(document.getElementById('num-children').value) || 0);
+
+            clearErrorMessage(inputElement, errorId); // 全部セットのエラーもクリア
+
+            // 人数よりも大きい値が入力された場合に警告
+            if (totalParticipants > 0 && rentalFullset > totalParticipants) {
+                showErrorMessage(inputElement, errorId, `フルセット数は人数(${totalParticipants}名)を超えられません。`);
+            } else if (rentalFullset < 0) {
+                inputElement.value = 0;
+            }
+
+            // 全部セットの数が変更されたらセンサー数を調整し、合計金額を再計算
+            adjustSensorCount(); // センサー調整は calculateTotalPrice の中で totalRentalQuantities が呼ばれる
+        }
+
+        /**
+         * 全てのレンタル品の中から最大値と全部セットの値を足したものが
+         * 予約人数を超えていないかバリデーションします。
+         */
+        function validateCombinedRentalMax() {
+            const totalParticipants = (parseInt(document.getElementById('num-adults').value) || 0) + (parseInt(document.getElementById('num-children').value) || 0);
+
+            const rentalJacket = parseInt(document.getElementById('rental-jacket').value) || 0;
+            const rentalAirgun = parseInt(document.getElementById('rental-airgun').value) || 0;
+            const rentalGoggles = parseInt(document.getElementById('rental-goggles').value) || 0;
+            const rentalGloves = parseInt(document.getElementById('rental-gloves').value) || 0;
+            const rentalFullset = parseInt(document.getElementById('rental-fullset').value) || 0;
+
+            // その他レンタル品（センサー以外）の最大値
+            const maxOtherRentals = Math.max(rentalJacket, rentalAirgun, rentalGoggles, rentalGloves);
+            
+            // 全部セットの数とその他レンタル品の最大値の合計
+            const combinedRentalMax = rentalFullset + maxOtherRentals;
+
+            const combinedRentalMaxErrorElement = document.getElementById('combined-rental-max-error');
+            clearErrorMessage(null, 'combined-rental-max-error'); // エラーをクリア
+
+            if (totalParticipants > 0 && combinedRentalMax > totalParticipants) {
+                showErrorMessage(null, 'combined-rental-max-error', `全部セットとその他レンタル品の最大値の合計が人数(${totalParticipants}名)を超えています。`);
+                return false;
+            }
+            return true;
+        }
+
+
+        /**
+         * 人数とフルセットレンタル数に基づいてセンサーの数を自動調整します。
+         */
+        function adjustSensorCount() {
+            const numAdults = parseInt(document.getElementById('num-adults').value) || 0;
+            const numChildren = parseInt(document.getElementById('num-children').value) || 0;
+            const totalParticipants = numAdults + numChildren;
+            
+            const rentalFullset = parseInt(document.getElementById('rental-fullset').value) || 0;
+            const rentalSensorInput = document.getElementById('rental-sensor');
+
+            // センサーの推奨数を計算: 総人数 - フルセットレンタル数。0以下にはならない。
+            let recommendedSensorCount = Math.max(0, totalParticipants - rentalFullset);
+
+            // センサーの入力フィールドの値を推奨数に設定（readonlyなので自動設定のみ）
+            rentalSensorInput.value = recommendedSensorCount;
+            
+            calculateTotalPrice(); // センサー数が調整された後に合計金額を再計算
+        }
+
+
+        /**
+         * 予約を確定し、支払い画面へ遷移します。
+         * 予約情報（合計金額、人数、日時）をURLパラメータとして渡します。
+         */
+        function confirmBookingAndProceedToPayment() {
+            // まず全てのエラーをクリア
+            clearAllBookingErrors();
+
+            const numAdults = parseInt(document.getElementById('num-adults').value) || 0;
+            const numChildren = parseInt(document.getElementById('num-children').value) || 0;
+            const totalParticipants = numAdults + numChildren;
+
+            const reservationDateInput = document.getElementById('reservation-date');
+            const reservationTimeSelect = document.getElementById('reservation-time');
+            const rentalSensorInput = document.getElementById('rental-sensor'); 
+
+            const reservationDate = reservationDateInput.value;
+            const reservationTime = reservationTimeSelect.value;
+            const rentalSensor = parseInt(rentalSensorInput.value) || 0; 
+            
+            let isValid = true;
+
+            // 必須入力と人数バリデーション
+            if (!reservationDate) {
+                showErrorMessage(reservationDateInput, 'reservation-date-error', '予約日を選択してください。');
+                isValid = false;
+            }
+            if (reservationTime === "") {
+                showErrorMessage(reservationTimeSelect, 'reservation-time-error', '予約時間を選択してください。');
+                isValid = false;
+            }
+            if (totalParticipants === 0) {
+                showErrorMessage(document.getElementById('num-adults'), 'total-participants-error', '予約人数を1名以上入力してください。');
+                isValid = false;
+            } else if (totalParticipants > 30) {
+                showErrorMessage(document.getElementById('num-adults'), 'total-participants-error', '大人と子供の合計人数は30名までです。');
+                isValid = false;
+            }
+
+            // センサーの必須レンタルバリデーション (adjustSensorCountで人数以下に自動調整されるため、基本は足りない場合のみ)
+            if (rentalSensor < totalParticipants) {
+                showErrorMessage(rentalSensorInput, 'sensor-error', '人数分のセンサーをレンタルしてください。');
+                isValid = false;
+            }
+            if (rentalSensor > totalParticipants) { // このチェックはreadonlyなので通常不要だが念のため
+                showErrorMessage(rentalSensorInput, 'sensor-error', 'レンタルするセンサーの数が予約人数を超えています。');
+                isValid = false;
+            }
+
+            // 各レンタル品の個別バリデーション（人数を超えていないか）
+            const rentalItemIds = ['rental-jacket', 'rental-airgun', 'rental-goggles', 'rental-gloves', 'rental-fullset'];
+            rentalItemIds.forEach(id => {
+                const inputElement = document.getElementById(id);
+                const inputValue = parseInt(inputElement.value) || 0;
+                const errorId = id.replace('rental-', '') + '-error'; // エラーIDを生成
+
+                if (totalParticipants > 0 && inputValue > totalParticipants) {
+                    showErrorMessage(inputElement, errorId, `レンタル数は人数(${totalParticipants}名)を超えられません。`);
+                    isValid = false;
+                }
+            });
+
+            // 全体レンタル品数バリデーション（最大値と全部セットの合計）
+            if (!validateCombinedRentalMax()) { 
+                isValid = false;
+            }
+
+
+            if (!isValid) {
+                return;
+            }
+
+            const total = calculateTotalPrice(); // 最終的な合計金額を再計算 (エラーがなければ正しい値)
+
+            // URLパラメータとして情報を渡す
+            window.location.href = `payment.html?totalPrice=${total}&participants=${totalParticipants}&date=${reservationDate}&time=${reservationTime}`;
+        }
+
+        // ページの読み込み時と入力値が変更されたときに合計金額を更新
+        document.addEventListener('DOMContentLoaded', () => {
+            adjustSensorCount(); // 初期表示でセンサー数を設定
+            
+            // 予約人数とレンタル品の入力フィールドに変更イベントリスナーを追加
+            document.getElementById('num-adults').addEventListener('input', handleParticipantInput);
+            document.getElementById('num-children').addEventListener('input', handleParticipantInput);
+
+            // レンタル品のうち、フルセットは特別処理ハンドラーを呼び出す
+            document.getElementById('rental-fullset').addEventListener('input', handleFullSetInput);
+
+            // その他のレンタル品はhandleOtherRentalInputを呼び出す
+            document.getElementById('rental-jacket').addEventListener('input', handleOtherRentalInput);
+            document.getElementById('rental-airgun').addEventListener('input', handleOtherRentalInput);
+            document.getElementById('rental-goggles').addEventListener('input', handleOtherRentalInput);
+            document.getElementById('rental-gloves').addEventListener('input', handleOtherRentalInput);
+
+            // 予約日時選択にもイベントリスナーを追加
+            document.getElementById('reservation-date').addEventListener('change', calculateTotalPrice);
+            document.getElementById('reservation-time').addEventListener('change', calculateTotalPrice);
+        });
+    </script>
+</body>
+</html>
